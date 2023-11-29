@@ -1,0 +1,15 @@
+/build
+/lake-packages
+
+## pdflatex auxiliary files:
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.pdf
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.xdv
+_minted-paper
