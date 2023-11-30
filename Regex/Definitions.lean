@@ -59,8 +59,6 @@ instance [Denotation α σ] : EffectiveBooleanAlgebra (BA α) σ where
   denote_compl := rfl
   denote a c := a.denote c
 
--- namespace Regexps
-
 variable (α : Type u) in
 
 /-- Class of regular expressions with lookarounds. -/
@@ -78,15 +76,6 @@ inductive RE : Type _ where
   | NegLookbehind     : RE → RE
 open RE
 
--- scoped infixr:35 " ⋓ "  => Alternation
--- scoped infixr:40 " ⋒ "  => Intersection
--- scoped infixr:50 " ⬝ "  => Concatenation
--- scoped postfix:max "*"  => Star
--- scoped prefix:max "~"   => Negation
--- scoped prefix:max "?="  => Lookahead
--- scoped prefix:max "?<=" => Lookbehind
--- scoped prefix:max "?!"  => NegLookahead
--- scoped prefix:max "?<!" => NegLookbehind
 infixr:35 " ⋓ "  => Alternation
 infixr:40 " ⋒ "  => Intersection
 infixr:50 " ⬝ "  => Concatenation
