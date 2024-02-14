@@ -18,12 +18,12 @@ theorem sizeOf_reverse_RE (r : RE α) :
   | l ⬝ r   => by simp; rw [←(sizeOf_reverse_RE l),←(sizeOf_reverse_RE r)]; ac_rfl
   | l ⋓ r   => by simp; rw [←(sizeOf_reverse_RE l),←(sizeOf_reverse_RE r)]
   | l ⋒ r   => by simp; rw [←(sizeOf_reverse_RE l),←(sizeOf_reverse_RE r)]
-  | r *     => by simp; rw [sizeOf_reverse_RE r]
-  | ~ r     => by simp; rw [←sizeOf_reverse_RE r]
-  | ?= r    => by simp; rw [←sizeOf_reverse_RE r]
-  | ?<= r   => by simp; rw [←sizeOf_reverse_RE r]
-  | ?! r    => by simp; rw [←sizeOf_reverse_RE r]
-  | ?<! r   => by simp; rw [←sizeOf_reverse_RE r]
+  | r *     => by simp[sizeOf_reverse_RE r]
+  | ~ r     => by simp[←sizeOf_reverse_RE r]
+  | ?= r    => by simp[←sizeOf_reverse_RE r]
+  | ?<= r   => by simp[←sizeOf_reverse_RE r]
+  | ?! r    => by simp[←sizeOf_reverse_RE r]
+  | ?<! r   => by simp[←sizeOf_reverse_RE r]
 
 @[simp]
 theorem reverse_RE_involution (r : RE α) :
@@ -46,15 +46,15 @@ theorem star_metric_reverse_RE (r : RE α) :
   match r with
   | ε       => rfl
   | Pred _  => rfl
-  | l ⬝ r   => by simp; rw [←star_metric_reverse_RE l,←star_metric_reverse_RE r]; ac_rfl
+  | l ⬝ r   => by simp[←star_metric_reverse_RE l,←star_metric_reverse_RE r]; ac_rfl
   | l ⋓ r   => by simp; rw [←star_metric_reverse_RE l,←star_metric_reverse_RE r]
   | l ⋒ r   => by simp; rw [←star_metric_reverse_RE l,←star_metric_reverse_RE r]
-  | r *     => by simp; rw [star_metric_reverse_RE r]
-  | ~ r     => by simp; rw [←star_metric_reverse_RE r]
-  | ?= r    => by simp; have iH1 := star_metric_reverse_RE r; rw [←iH1]
-  | ?<= r   => by simp; have iH1 := star_metric_reverse_RE r; rw [←iH1]
-  | ?! r    => by simp; have iH1 := star_metric_reverse_RE r; rw [←iH1]
-  | ?<! r   => by simp; have iH1 := star_metric_reverse_RE r; rw [←iH1]
+  | r *     => by simp[star_metric_reverse_RE r]
+  | ~ r     => by simp[←star_metric_reverse_RE r]
+  | ?= r    => by simp[star_metric_reverse_RE r]
+  | ?<= r   => by simp[star_metric_reverse_RE r]
+  | ?! r    => by simp[star_metric_reverse_RE r]
+  | ?<! r   => by simp[star_metric_reverse_RE r]
 
 /--
 Main termination metric used in the definition of derivative, nullability and existence of match
@@ -84,12 +84,12 @@ theorem lookaround_height_reverse_RE (r : RE α) :
     simp; rw [←(lookaround_height_reverse_RE l),←(lookaround_height_reverse_RE r)]
   | l ⋒ r  => by
     simp; rw [←(lookaround_height_reverse_RE l),←(lookaround_height_reverse_RE r)]
-  | r *    => by simp; rw [lookaround_height_reverse_RE r]
-  | ~ r    => by simp; rw [←lookaround_height_reverse_RE r]
-  | ?= r   => by simp; rw [←lookaround_height_reverse_RE r]
-  | ?<= r  => by simp; rw [←lookaround_height_reverse_RE r]
-  | ?! r   => by simp; rw [←lookaround_height_reverse_RE r]
-  | ?<! r  => by simp; rw [←lookaround_height_reverse_RE r]
+  | r *    => by simp[lookaround_height_reverse_RE r]
+  | ~ r    => by simp[←lookaround_height_reverse_RE r]
+  | ?= r   => by simp[←lookaround_height_reverse_RE r]
+  | ?<= r  => by simp[←lookaround_height_reverse_RE r]
+  | ?! r   => by simp[←lookaround_height_reverse_RE r]
+  | ?<! r  => by simp[←lookaround_height_reverse_RE r]
 
 /- Coherence with respect to the derivative termination metric and constructors. -/
 

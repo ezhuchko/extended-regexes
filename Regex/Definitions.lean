@@ -304,7 +304,7 @@ theorem increase_match_left_splitting {sp : Span σ} :
     sp.increase_match_left.word = sp.word :=
   match sp with
   | ⟨[], u, v⟩ => rfl
-  | ⟨a::s, u, v⟩ => by unfold Span.increase_match_left; simp;
+  | ⟨a::s, u, v⟩ => by simp
 
 /-- The (begin) location view of a span is simply obtained by concatenating
     match and remaining characters, thus forgetting the match length. -/

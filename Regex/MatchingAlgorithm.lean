@@ -56,15 +56,14 @@ def null?_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
 /-- The location of the result of the maxMatchEnd function coincides with the input location.
     (i.e. it is a splitting of the original word) -/
 def maxMatchEnd_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
-  (matching : maxMatchEnd r x = some sp_out) : sp_out.beg = x := by
+  (matching : maxMatchEnd r x = some sp_out) : sp_out.beg = x :=
   match x with
-  | ⟨_,[]⟩ => simp at matching; exact null?_split_as_loc matching
-  | ⟨a,c::b⟩ =>
+  | ⟨_,[]⟩ => null?_split_as_loc matching
+  | ⟨a,c::b⟩ => by
     match match_eq:maxMatchEnd (der (r : RE α) ⟨a,c::b⟩).val ⟨c::a,b⟩ with
     | none =>
       unfold maxMatchEnd at matching
       rw[match_eq] at matching;
-      simp at matching;
       exact null?_split_as_loc matching
     | some sp =>
       have ind := maxMatchEnd_split_as_loc match_eq
@@ -141,45 +140,39 @@ def derivesEndLocation (loc : Loc σ) (sp2 : Span σ) : Prop :=
   ∧ loc.word = sp2.word
 
 /- A location is a match end location whenever it is a start for the reversal of both. -/
-theorem match_end_start :
-    derivesEndLocation x sp
-  → derivesStartLocation x.reverse sp.reverse :=
-  λ h => by
+theorem match_end_start (h : derivesEndLocation x sp) :
+  derivesStartLocation x.reverse sp.reverse := by
+  match eq1:x with
+  | ⟨x1,x2⟩ =>
+  match eq2:sp with
+  | ⟨sp1,sp2,sp3⟩ =>
     simp_all
-    match eq1:x with
-    | ⟨x1,x2⟩ =>
-    match eq2:sp with
-    | ⟨sp1,sp2,sp3⟩ =>
-      simp_all
-      match h with
-      | ⟨h1,h2⟩ =>
-        have snd := congrArg List.reverse h2
-        simp at snd
-        rw[←List.append_assoc] at h2
-        exact ⟨congrArg List.length $ List.append_inj_right h2
-                 (by simp; exact h1),snd⟩
+    match h with
+    | ⟨h1,h2⟩ =>
+      have snd := congrArg List.reverse h2
+      simp at snd
+      rw[←List.append_assoc] at h2
+      exact ⟨congrArg List.length $ List.append_inj_right h2
+               (by simp; exact h1),snd⟩
 
 /- A location is a match start location whenever it is an end for the reversal of both. -/
-theorem match_start_end :
-    derivesStartLocation x sp
-  → derivesEndLocation x.reverse sp.reverse :=
-  λ h => by
+theorem match_start_end (h : derivesStartLocation x sp) :
+  derivesEndLocation x.reverse sp.reverse := by
+  match eq1:x with
+  | ⟨x1,x2⟩ =>
+  match eq2:sp with
+  | ⟨sp1,sp2,sp3⟩ =>
     simp_all
-    match eq1:x with
-    | ⟨x1,x2⟩ =>
-    match eq2:sp with
-    | ⟨sp1,sp2,sp3⟩ =>
-      simp_all
-      match h with
-      | ⟨h1,h2⟩ =>
-        have snd := congrArg List.reverse h2
-        simp at snd
-        exact ⟨(by
-          have p := congrArg List.length
-                  $ List.append_inj_right h2 (by simp; exact h1);
-          simp at p;
-          rw[Nat.add_comm] at p
-          exact p),snd⟩
+    match h with
+    | ⟨h1,h2⟩ =>
+      have snd := congrArg List.reverse h2
+      simp at snd
+      exact ⟨(by
+        have p := congrArg List.length
+                $ List.append_inj_right h2 (by simp; exact h1);
+        simp at p;
+        rw[Nat.add_comm] at p
+        exact p),snd⟩
 
 /- Similar lemma to the previous one, referring directly to the indices. -/
 theorem start_end_reverse {sp1 sp2 : Span σ} :
@@ -198,12 +191,12 @@ theorem start_end_reverse {sp1 sp2 : Span σ} :
 
 /-- Helper function showing that reversing a word is injective.
     TODO: PR this to mathlib4 -/
-theorem reverse_injective {sp1 sp2 : List σ} (h : sp1.reverse = sp2.reverse) : sp1 = sp2 := by
+theorem reverse_injective {sp1 sp2 : List σ} (h : sp1.reverse = sp2.reverse) : sp1 = sp2 :=
   match sp1,sp2 with
   | [],[] => rfl
-  | [],c::cs => simp at h;
-  | c::cs,[] => simp at h;
-  | c::cs,d::ds =>
+  | [],c::cs => by simp at h;
+  | c::cs,[] => by simp at h;
+  | c::cs,d::ds => by
     simp at h
     have ⟨s1,s2⟩ := List.append_inj' h (by simp)
     simp at s2
@@ -232,8 +225,8 @@ theorem derivesStartLocation_equal_or_lt
 
 /-- If the location is the end of the word, the span must be empty on the right. -/
 theorem match_start_empty_empty
-  (h : derivesStartLocation (a, []) sp)
-  : sp = (a, [], []) :=
+  (h : derivesStartLocation (a, []) sp) :
+  sp = (a, [], []) :=
   match sp with
   | ⟨sp1,sp2,sp3⟩ => by
     simp_all
@@ -302,8 +295,7 @@ theorem maxMatchEnd_no_match_here {x : Loc σ} {r : RE α}
     that starts at the position provided. -/
 theorem maxMatchEnd_no_match {x : Loc σ} {r : RE α}
   (matching : maxMatchEnd r x = none) :
-  (∀ sp, derivesStartLocation x sp
-      → ¬(sp ⊢ r)) :=
+  (∀ sp, derivesStartLocation x sp → ¬(sp ⊢ r)) :=
   λ sp lb sp_match => by
     match derivesStartLocation_equal_or_lt lb with
     | Or.inl rcase =>
@@ -492,8 +484,7 @@ theorem minMatchStart_min {r : RE α} {x : Loc σ} {sp_out : Span σ}
 /-- See completeness theorem above. -/
 theorem minMatchStart_no_match {r : RE α} {x : Loc σ}
   (matching : minMatchStart r x = none) :
-  (∀ sp, derivesEndLocation x sp
-      → ¬(sp ⊢ r)) := by
+  (∀ sp, derivesEndLocation x sp → ¬(sp ⊢ r)) := by
   unfold minMatchStart at matching
   match eq:maxMatchEnd rʳ (Loc.reverse x) with
   | none =>
@@ -529,7 +520,9 @@ theorem match_right_extension
   (matching : sp ⊢ R) :
   (max_right_extension sp) ⊢ (R ⬝ (Pred (⊤ : α))*) :=
   match sp with
-  | ⟨s,u,v⟩ => by simp; exact derives_Cat.mpr ⟨u,v, (by simp; exact matching), derives_TopStar, rfl⟩
+  | ⟨s,u,v⟩ => by
+    simp;
+    exact derives_Cat.mpr ⟨u,v, (by simp; exact matching), derives_TopStar, rfl⟩
 
 /-- Crucial correctness of `max_right_extension`:
     the end location of the extension is indeed a match end location of any word
