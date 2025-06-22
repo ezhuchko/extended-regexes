@@ -1,5 +1,3 @@
-import Regex.Definitions
-import Regex.Metrics
 import Regex.Reversal
 import Regex.Correctness -- needed for reversal of derives
 
@@ -37,15 +35,14 @@ def maxMatchEnd (r : RE α) (x : Loc σ) : Option (Span σ) :=
     match maxMatchEnd (der r x) ⟨c::u,v⟩ with
     | none => null? r x
     | some res => some res.increase_match_left
-termination_by
-  maxMatchEnd r x => x.right
+termination_by x.right
 
 /-- The location of the result of the null? function coincides with the input location.
     (i.e. it is a splitting of the original word) -/
 def null?_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
   (matching : null? r x = some sp_out) : sp_out.beg = x := by
   unfold null? at matching
-  by_cases null r x
+  by_cases h : null r x
   . simp at h;
     rw[h] at matching; simp at matching;
     subst matching;
@@ -58,7 +55,8 @@ def null?_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
 def maxMatchEnd_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
   (matching : maxMatchEnd r x = some sp_out) : sp_out.beg = x :=
   match x with
-  | ⟨_,[]⟩ => null?_split_as_loc matching
+  | ⟨_,[]⟩ => by
+    simp; simp at matching; let ⟨_,m2⟩ := matching; subst m2; simp
   | ⟨a,c::b⟩ => by
     match match_eq:maxMatchEnd (der (r : RE α) ⟨a,c::b⟩).val ⟨c::a,b⟩ with
     | none =>
@@ -75,8 +73,7 @@ def maxMatchEnd_split_as_loc {r : RE α} {x : Loc σ} {sp_out : Span σ}
       | ⟨[],_,_⟩ => simp at ind
       | ⟨cc::aa,m,r⟩ =>
         simp_all
-termination_by
-  maxMatchEnd_split_as_loc => x.right
+termination_by x.right
 
 /-- Given a precise split on the left location, derive that the entire word coincides. -/
 def split_as_loc_word {x : Loc σ} {sp : Span σ}
@@ -90,8 +87,8 @@ theorem maxMatchEnd_matches {x : Loc σ} {r : RE α} {sp_out : Span σ}
   match x with
   | ⟨a,[]⟩ => by
     simp at matching
-    by_cases null r ⟨a,[]⟩
-    . rw[h] at matching; simp at matching; subst matching; assumption
+    by_cases h : null r ⟨a,[]⟩
+    . rw[h] at matching; simp at matching; subst matching; simp; exact h
     . simp at h
       rw[h] at matching
       simp at matching
@@ -101,7 +98,7 @@ theorem maxMatchEnd_matches {x : Loc σ} {r : RE α} {sp_out : Span σ}
       unfold maxMatchEnd at matching;
       rw[match_eq] at matching;
       simp at matching;
-      by_cases null r ⟨a,c::b⟩
+      by_cases h : null r ⟨a,c::b⟩
       . simp at h; rw[h] at matching; simp at matching;
         subst matching;
         simp; assumption
@@ -117,8 +114,7 @@ theorem maxMatchEnd_matches {x : Loc σ} {r : RE α} {sp_out : Span σ}
       match sp with
       | ⟨spl,spm,spr⟩ =>
         simp_all
-termination_by
-  maxMatchEnd_matches => x.right
+termination_by x.right
 
 /-- Preliminary definitions on spans.
 The main idea is to place enough infrastructure to be able
@@ -142,7 +138,7 @@ def derivesEndLocation (loc : Loc σ) (sp2 : Span σ) : Prop :=
 /- A location is a match end location whenever it is a start for the reversal of both. -/
 theorem match_end_start (h : derivesEndLocation x sp) :
   derivesStartLocation x.reverse sp.reverse := by
-  match eq1:x with
+  match x with
   | ⟨x1,x2⟩ =>
   match eq2:sp with
   | ⟨sp1,sp2,sp3⟩ =>
@@ -158,7 +154,7 @@ theorem match_end_start (h : derivesEndLocation x sp) :
 /- A location is a match start location whenever it is an end for the reversal of both. -/
 theorem match_start_end (h : derivesStartLocation x sp) :
   derivesEndLocation x.reverse sp.reverse := by
-  match eq1:x with
+  match x with
   | ⟨x1,x2⟩ =>
   match eq2:sp with
   | ⟨sp1,sp2,sp3⟩ =>
@@ -238,11 +234,7 @@ theorem match_start_empty_empty
         rw[h1] at asd
         linarith
       simp at this
-      have eq1 := List.length_eq_zero.mp this.1
-      have eq2 := List.length_eq_zero.mp this.2
-      simp_all
-      have eq3 := reverse_injective h2
-      simp_all
+      simp_all only [List.reverse_nil, List.nil_append, and_self]
 
 /-- The starting location of maxMatchEnd coincides with the input location. -/
 def maxMatchEnd_derivesStartLocation {r : RE α} {x : Loc σ} {sp_out : Span σ}
@@ -277,14 +269,14 @@ theorem maxMatchEnd_no_match_here {x : Loc σ} {r : RE α}
   ¬(x.as_span ⊢ r) :=
   match x with
   | ⟨xl,[]⟩ => by
-    simp at matching
+    simp at matching; simp
     exact matching
   | ⟨xl,xc::xr⟩ => by
     unfold maxMatchEnd at matching
     match hyp:maxMatchEnd (der r (xl, xc :: xr)).val (xc :: xl, xr) with
     | none =>
       rw[hyp] at matching;
-      simp at matching
+      simp at matching; simp
       exact matching
     | some _ =>
       rw[hyp] at matching;
@@ -301,7 +293,7 @@ theorem maxMatchEnd_no_match {x : Loc σ} {r : RE α}
     | Or.inl rcase =>
       subst rcase
       simp at sp_match
-      exact maxMatchEnd_no_match_here matching sp_match
+      exact maxMatchEnd_no_match_here matching (by simp; exact sp_match)
     | Or.inr rcase =>
       match x_eq:x with
       | ⟨xl,[]⟩ =>
@@ -331,8 +323,7 @@ theorem maxMatchEnd_no_match {x : Loc σ} {r : RE α}
         | some _ =>
           rw[hyp] at matching;
           simp at matching
-termination_by
-  maxMatchEnd_no_match => x.right
+termination_by x.right
 
 /-- Main location correctness theorem for `maxMatchEnd`.
     If maxMatchEnd returns a span, then it is the one with longest
@@ -347,7 +338,7 @@ theorem maxMatchEnd_max {r : RE α} {sp_out : Span σ} {x : Loc σ}
   match x_eq:x with
   | ⟨a,[]⟩ =>
     simp at m
-    by_cases null r (a, []) = true
+    by_cases h : null r (a, []) = true
     . rw[h] at m; simp at m; subst m;
       have := match_start_empty_empty lb
       subst this
@@ -406,8 +397,7 @@ theorem maxMatchEnd_max {r : RE α} {sp_out : Span σ} {x : Loc σ}
               subst m
               simp_all
               linarith
-termination_by
-  maxMatchEnd_max => x.right
+termination_by x.right
 
 /-
 # Dual theorems for `minMatchStart`
@@ -511,8 +501,7 @@ theorem derives_TopStar {sp : Span σ} : sp ⊢ (Pred (⊤ : α))* :=
     let p := @derives_TopStar (sp := ⟨c::l,m,r⟩)
     simp
     exact derives_Cat.mpr ⟨[],_,(by simp),p,by simp⟩
-termination_by
-  derives_TopStar => sp.match.length
+termination_by sp.match.length
 
 /-- Any match can be lifted to the match on the maximal right extension
     and concatenating true to the regex accordingly. -/
@@ -582,7 +571,7 @@ theorem llmatch_leftmost {r : RE α} {sp_out : Span σ} {w : List σ}
 
 /- The span returned by `llmatch` is the longest match among those
    on the same word `w` that start at the same location. -/
-theorem llmatch_longest {r : RE α} {sp_init sp_out : Span σ}
+theorem llmatch_longest {r : RE α} {sp_out : Span σ}
   (m : llmatch r w = some sp_out) :
   (∀ sp, sp.word = w
        → sp.i = sp_out.i

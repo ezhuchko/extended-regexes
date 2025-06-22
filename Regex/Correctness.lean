@@ -1,6 +1,3 @@
-import Regex.Definitions
-import Regex.Metrics
-import Regex.Derives
 import Regex.Models
 import Regex.Reversal
 
@@ -11,8 +8,7 @@ Contains each lemma required to show that `models` and `derives` are equivalent,
 along with the main correctness proof.
 -/
 
-open BA
-open RE
+open BA RE
 
 variable [EffectiveBooleanAlgebra α σ]
 
@@ -23,11 +19,10 @@ theorem derives_Bot : (sp ⊢ (Pred ⊥ : RE α)) = false :=
     | [] => by simp
     | a::u => by
       simp;
-      by_cases (denote (⊥ : α) a)
-      . simp; simp at h
-      . simp; apply derives_Bot
-termination_by
-  derives_Bot sp => sp.2.1
+      by_cases h : (denote (⊥ : α) a)
+      . simp at h
+      . apply derives_Bot
+termination_by sp.2.1
 
 theorem derives_Eps  :
   sp ⊢ (ε : RE α) ↔ sp.match.length = 0 :=
@@ -56,11 +51,11 @@ theorem derives_to_existsMatch {loc : Loc σ} {r : RE α} :
   existsMatch r loc ↔ ∃ sp, sp ⊢ r ∧ sp.beg = loc :=
   ⟨λ h => by
      match loc with
-     | ⟨u,[]⟩ => simp at h; exists ⟨u,[],[]⟩
+     | ⟨u,[]⟩ => simp at h; exists ⟨u,[],[]⟩; simp; exact h
      | ⟨u,a::v⟩ =>
        simp at h;
        match h with
-       | Or.inl p => exists ⟨u,[],a::v⟩;
+       | Or.inl p => exists ⟨u,[],a::v⟩; simp; exact p
        | Or.inr p =>
          match derives_to_existsMatch.mp p with
          | ⟨spM,ism,eq⟩ =>
@@ -93,8 +88,7 @@ theorem derives_to_existsMatch {loc : Loc σ} {r : RE α} :
            | ⟨eq1,eq2,eq3⟩ =>
              subst eq1 eq2 eq3;
              exact Or.inr (derives_to_existsMatch.mpr ⟨(a :: s, u, v), ism, by simp⟩)⟩
-termination_by
-  derives_to_existsMatch x r => (x.2, star_metric r)
+termination_by (loc.2, star_metric r)
 
 theorem derives_Lookahead {r : RE α} :
   sp ⊢ (?= r) ↔ (sp.match.length = 0 ∧ ∃ spM, spM ⊢ r ∧ spM.beg = sp.beg) :=
@@ -122,7 +116,7 @@ theorem derives_Lookahead {r : RE α} :
           | ⟨eq1,eq2⟩ =>
             subst eq1 eq2; simp;
             apply derives_to_existsMatch.mpr;
-            exact ⟨_, inr, by aesop⟩
+            exact ⟨_, inr, by simp⟩
         | ⟨s,a::u,v⟩ => contradiction⟩
 
 theorem derives_Lookbehind {r : RE α} :
@@ -150,7 +144,7 @@ theorem derives_Lookbehind {r : RE α} :
           | ⟨eq1,eq2⟩ =>
             subst eq1 eq2; simp;
             rw [derives_to_existsMatch];
-            exact ⟨_, inr, by aesop⟩
+            exact ⟨_, inr, by simp⟩
         | ⟨s,a::u,v⟩ => contradiction⟩
 
 theorem derives_NegLookahead {r : RE α} :
@@ -164,7 +158,7 @@ theorem derives_NegLookahead {r : RE α} :
       subst h3; intro h4; rw [←h4] at h;
       have h5 : h1.beg = (h1.fst, h1.snd.fst ++ h1.snd.snd) := by simp;
       have contra := derives_to_existsMatch.mpr ⟨h1, ⟨h2, h5⟩⟩;
-      simp_all only
+      simp_all only [Span.beg, Span.left, Span.match, Span.right, Bool.false_eq_true]
     | ⟨s,a::u,v⟩ =>
       unfold derives der at h;
       rw[derives_Bot] at h;
@@ -177,7 +171,7 @@ theorem derives_NegLookahead {r : RE α} :
         | ⟨s,[],v⟩ =>
           unfold derives null;
           simp;
-          by_cases (existsMatch r (s, v) = false)
+          by_cases h : (existsMatch r (s, v) = false)
           . assumption
           . simp at h; rw[derives_to_existsMatch] at h; simp at h;
             match h with
@@ -195,7 +189,7 @@ theorem derives_NegLookbehind {r : RE α} :
       subst h3; intro h4; rw [←h4] at h;
       have h5 : h1.beg = (h1.fst, h1.snd.fst ++ h1.snd.snd) := by simp;
       have contra := derives_to_existsMatch.mpr ⟨h1, ⟨h2, h5⟩⟩;
-      simp_all only
+      simp_all only [Span.beg, Span.left, Span.match, Span.right, Bool.false_eq_true]
     | ⟨s,a::u,v⟩ =>
       unfold derives at h
       unfold der at h
@@ -209,7 +203,7 @@ theorem derives_NegLookbehind {r : RE α} :
         | ⟨s,[],v⟩ =>
           unfold derives; unfold null;
           simp;
-          by_cases (existsMatch rʳ (v, s) = false)
+          by_cases h : (existsMatch rʳ (v, s) = false)
           . assumption
           . simp at h; rw [derives_to_existsMatch] at h; simp at h;
             match h with
@@ -225,8 +219,7 @@ theorem derives_Alt {sp : Span σ} {r : RE α} :
     | a::u => by
       simp
       simp [@derives_Alt ((der l (s, a :: (u ++ v))).1) (a::s,u,v)] -- inductive hypothesis
-termination_by
-  derives_Alt => sp.2.1
+termination_by sp.2.1
 
 theorem derives_Inter {sp : Span σ} {r : RE α} :
   sp ⊢ (l ⋒ r) ↔ sp ⊢ l ∧ sp ⊢ r :=
@@ -236,8 +229,7 @@ theorem derives_Inter {sp : Span σ} {r : RE α} :
     | [] => by simp
     | a::u => by
       simp [@derives_Inter ((der l (s, a :: (u ++ v))).1) (a::s,u,v)] -- inductive hypothesis
-termination_by
-  derives_Inter => sp.2.1
+termination_by sp.2.1
 
 theorem derives_Negation {sp : Span σ} {r : RE α} :
   sp ⊢ (~ r) ↔ ¬ (sp ⊢ r) :=
@@ -247,9 +239,9 @@ theorem derives_Negation {sp : Span σ} {r : RE α} :
     | [] => by simp
     | a::u => by
       simp
-      simp [@derives_Negation (a::s,u,v) (der r (s, a :: (u ++ v))).1] -- inductive hypothesis
-termination_by
-  derives_Negation => sp.2.1
+      have := @derives_Negation (a::s,u,v) (der r (s, a :: (u ++ v))).1 -- inductive hypothesis
+      simp at this; simp[this]
+termination_by sp.2.1
 
 theorem derives_Cat {r : RE α} :
   sp ⊢ (l ⬝ r) ↔
@@ -259,11 +251,9 @@ theorem derives_Cat {r : RE α} :
    ∧ u₁ ++ u₂ = sp.match := by
   match sp with
   | ⟨s,[],v⟩ =>
-    simp;
-    exact ⟨by intro h; exact (⟨[],[],by simp; assumption⟩),
-           by intro h;
-              let ⟨g1,g2,g3,g4,⟨g5,g6⟩⟩ := h;
-              subst g5 g6; simp at g3 g4; exact ⟨g3,g4⟩⟩
+    simp only [derives, Span.beg, Span.left, Span.match, Span.right, List.nil_append, null.eq_3,
+      Bool.and_eq_true, List.append_eq_nil_iff, existsAndEq, and_true, exists_eq_right_right,
+      List.reverse_nil]
   | ⟨s,a::u,v⟩ =>
     exact ⟨by intro h; simp at h;
               by_cases h1 : null l (s, a :: (u ++ v))
@@ -299,8 +289,7 @@ theorem derives_Cat {r : RE α} :
                   let ⟨g5a,g5b⟩ := g5;
                   subst g5a g5b;
                   exact derives_Cat.mpr ⟨t, g2, by simp_all, by simp_all, by simp_all⟩⟩
-termination_by
-  derives_Cat => sp.2.1.length
+termination_by sp.2.1.length
 
 theorem derives_Star_mp {r : RE α} :
   sp ⊢ (r *) → ∃ (m : ℕ), sp ⊢ (r ⁽ m ⁾) :=
@@ -333,8 +322,7 @@ theorem derives_Star_mp {r : RE α} :
             exact ⟨b::t,g2,g3,iH,by simp⟩
           . apply derives_Cat.mpr; subst g5;
             exact ⟨b::t,g2,g3,iH,by simp⟩
-termination_by
-  derives_Star_mp => sp.2.1.length
+termination_by sp.2.1.length
 
 /-- Additional lemma used in derives_Star_mpr. -/
 theorem derives_Star_contraction {r : RE α} : sp ⊢ r ⬝ r* → sp ⊢ r* :=
@@ -343,11 +331,11 @@ theorem derives_Star_contraction {r : RE α} : sp ⊢ r ⬝ r* → sp ⊢ r* :=
   | ⟨s,[],v⟩ => by simp
   | ⟨s,a::u,v⟩ => by
     simp at hyp
-    by_cases (null r (s, a :: (u ++ v)) = true)
+    by_cases h : (null r (s, a :: (u ++ v)) = true)
     . simp_all;
       match derives_Alt.mp hyp with
-      | Or.inl h => simp at h; assumption
-      | Or.inr h => simp at h; assumption
+      | Or.inl h => assumption
+      | Or.inr h => assumption
     . simp at h; rw[h] at hyp; simp at hyp; simp; assumption
 
 /-- This lemma needs to be declared separately in order to correctly capture the inductive step. -/
@@ -374,14 +362,15 @@ theorem exists_span_iff (p : Span σ → Prop) : (∃ s, p s) ↔ ∃ u v w, p �
   ⟨by rintro ⟨⟩; exact ⟨_, _, _, ‹_›⟩, by rintro ⟨_,_,_,_⟩; exact ⟨_, ‹_›⟩⟩
 
 theorem models_reversal' {R : RE α} {sp : Span σ} :
-    sp ⊨ (R ʳ) ↔ sp.reverse ⊨ R := by
+    sp ⊫ (R ʳ) ↔ sp.reverse ⊫ R := by
   simpa using models_reversal (R := Rʳ)
 
 /-- Main correctness theorem. -/
 
-theorem correctness : ∀ {R : RE α}, sp ⊢ R ↔ sp ⊨ R
-  | ε      => derives_Eps
-  | Pred φ => derives_Pred
+theorem correctness {R : RE α} : sp ⊢ R ↔ sp ⊫ R :=
+  match R with
+  | ε      => by simp[derives_Eps]
+  | Pred φ => by simp[derives_Pred]
   | ?= r   => by
     have : star_metric r < star_metric (?= r) := star_metric_Lookahead
     rw [derives_Lookahead, models]
@@ -425,11 +414,8 @@ theorem correctness : ∀ {R : RE α}, sp ⊢ R ↔ sp ⊨ R
     have : star_metric r < star_metric (l ⬝ r) := star_metric_Cat_r
     rw [derives_Cat]
     simp [@correctness _ l, @correctness _ r] -- induction hypothesis
-termination_by
-  correctness sp r => star_metric r
-decreasing_by
-  simp only[InvImage, WellFoundedRelation.rel];
-  assumption
+termination_by star_metric R
+decreasing_by repeat {assumption}
 
 /- Main reversal theorem using the derivation relation instead of `models`. -/
 theorem derives_reversal {R : RE α} : sp ⊢ R ↔ sp.reverse ⊢ (R ʳ) :=

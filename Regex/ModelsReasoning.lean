@@ -10,12 +10,11 @@ The main property derived here is the characterization of `repeat_cat` and
 its interaction with `reverse_regex`.
 -/
 
-variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
-         {r p q : RE α}
+variable {α σ : Type} [EffectiveBooleanAlgebra α σ] {r p q : RE α}
 
 /-- correctness of regular expressions. -/
 def models_equivalence (r q : RE α) : Prop :=
-  ∀ {sp}, sp ⊨ r ↔ sp ⊨ q
+  ∀ {sp}, sp ⊫ r ↔ sp ⊫ q
 
 infixr:30 " ↔ᵣ " => models_equivalence
 
@@ -38,7 +37,14 @@ theorem equiv_cat_assoc :
       simp at h;
       simp;
       match h with
-      | ⟨sp1,sp2,⟨ss1,ss2,b1,b2,k⟩,a2,c⟩ => aesop,
+      | ⟨sp1,sp2,⟨ss1,ss2,b1,b2,k⟩,a2,c⟩ =>
+        subst c k;
+        clear h
+        simp at b2 a2
+        exists (ss1); exists (ss2 ++ (sp2)); simp;
+        exists b1; exists ss2;
+        exists sp2;
+        ,
     λ h => by
     match sp with
     | ⟨s,u,v⟩ =>
@@ -79,12 +85,9 @@ theorem equiv_eps_cat :
   | ⟨b,n,l⟩ =>
   ⟨ λ h => by
       simp at h
-      match h with
-      | ⟨ [],_,r1,r2,c⟩ => simp at r2 c; subst c; assumption,
+      exact h,
     λ h => by
-     simp;
-     exact ⟨[],(by simp),_,(by simp; exact h),(by simp)⟩
-  ⟩
+     simp; exact h⟩
 
 /-- Epsilon is the right unit with respect to concatenation, using `models`. -/
 theorem equiv_cat_eps :
@@ -92,14 +95,8 @@ theorem equiv_cat_eps :
   λ {sp} =>
   match sp with
   | ⟨b,n,l⟩ =>
-  ⟨ λ h => by
-      simp at h
-      match h with
-      | ⟨ s1,[],r1,r2,c⟩ => simp at r2 c; subst c; assumption,
-    λ h => by
-     simp;
-     exact ⟨_,[],(by simp; exact h),(by simp),(by simp)⟩
-  ⟩
+  ⟨ λ h => by simp at h; exact h,
+    λ h => by simp; exact h⟩
 
 /-- Symmetry of iterated product, using `models`. -/
 theorem equiv_repeat_cat_cat :

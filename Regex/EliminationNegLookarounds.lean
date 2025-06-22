@@ -1,6 +1,3 @@
-import Regex.Definitions
-import Regex.Metrics
-import Regex.Derives
 import Regex.Models
 import Regex.MatchingAlgorithm
 
@@ -10,18 +7,17 @@ import Regex.MatchingAlgorithm
 Contains the result that negative lookarounds are not needed when we add the start and end anchors as primitive regexes.
 -/
 
-open BA
-open RE
+open BA RE
 
 variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 
 @[simp]
-theorem models_TopStar {sp : Span σ} : sp ⊨ (Pred (⊤ : α))* :=
+theorem models_TopStar {sp : Span σ} : sp ⊫ (Pred (⊤ : α))* :=
   derives_TopStar |> correctness.mp
 
 @[simp]
 theorem models_NegLookahead_Top {sp : Span σ}:
-  sp ⊨ (?!(Pred (⊤ : α))) ↔ sp.match.length = 0 ∧ sp.right.length = 0 :=
+  sp ⊫ (?!(Pred (⊤ : α))) ↔ sp.match.length = 0 ∧ sp.right.length = 0 :=
   match sp with
   | ⟨s,u,v⟩ =>
     -- match on u
@@ -45,7 +41,7 @@ def endAnchor : RE α := (?!(Pred (⊤ : α)))
 def pad : RE α := (Pred (⊤ : α))*
 
 theorem eliminationNegLookaroundsL {R : RE α} {sp : Span σ} :
-  sp ⊨ (?=((~(R ⬝ pad)) ⬝ endAnchor)) → sp ⊨ (?! R) :=
+  sp ⊫ (?=((~(R ⬝ pad)) ⬝ endAnchor)) → sp ⊫ (?! R) :=
   λ h =>
   match hu:sp with
   | ⟨s,u,v⟩ =>
@@ -70,7 +66,7 @@ theorem eliminationNegLookaroundsL {R : RE α} {sp : Span σ} :
         have hEndAnch := models_NegLookahead_Top.mp h4;
         simp at hEndAnch h3;
         let ⟨j1,j2⟩ := hEndAnch;
-        rw [List.length_eq_zero] at j1 j2;
+        -- rw [List.length_eq_zero] at j1 j2;
         rw [j2] at h6 h3;
         subst j1; simp at h3 h5 h6; subst h5;
         -- match on uu
@@ -94,7 +90,7 @@ theorem eliminationNegLookaroundsL {R : RE α} {sp : Span σ} :
     | a::u => by simp at h
 
 theorem eliminationNegLookaroundsR {R : RE α} {sp : Span σ} :
-  sp ⊨ (?! R) → sp ⊨ (?=((~(R ⬝ pad)) ⬝ endAnchor)) :=
+  sp ⊫ (?! R) → sp ⊫ (?=((~(R ⬝ pad)) ⬝ endAnchor)) :=
   λ h =>
   match hu:sp with
   | ⟨s,u,v⟩ =>
@@ -110,15 +106,11 @@ theorem eliminationNegLookaroundsR {R : RE α} {sp : Span σ} :
       | [] =>
         exists (s,u,v);
         subst hh; simp;
-        exact ⟨by exists []; exists []; simp;
-                  unfold endAnchor;
-                  rw [models_NegLookahead_Top];
-                  simp; rw [List.length_eq_zero];
-                  subst hv; simp;
-                  intro xs ys h1 h2 h3 h4;
-                  subst h3 h4;
-                  apply (h (s,[],[])) h1; rfl; rfl,
-               hv⟩
+        exact ⟨⟨fun x hx h1 h2 eq eq1 => by
+                subst eq eq1 hv; have := h _ h1 rfl; simp at this,
+                by subst hv; unfold endAnchor;
+                   rw[models_NegLookahead_Top];
+                   exact ⟨rfl,rfl⟩⟩,hv⟩
       | a::v =>
         exists (s,a::v,[]);
         subst hh hv; simp;
@@ -133,5 +125,5 @@ theorem eliminationNegLookaroundsR {R : RE α} {sp : Span σ} :
 
 /- The main result which implies that if we add \z as primitive regex then negative lookahead is not needed. -/
 theorem eliminationNegLookarounds {R : RE α} {sp : Span σ} :
-  sp ⊨ (?=((~(R ⬝ pad)) ⬝ endAnchor)) ↔ sp ⊨ (?! R) :=
+  sp ⊫ (?=((~(R ⬝ pad)) ⬝ endAnchor)) ↔ sp ⊫ (?! R) :=
   ⟨eliminationNegLookaroundsL, eliminationNegLookaroundsR⟩

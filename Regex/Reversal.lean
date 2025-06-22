@@ -1,7 +1,3 @@
-import Regex.Definitions
-import Regex.Metrics
-import Regex.Derives
-import Regex.Models
 import Regex.ModelsReasoning
 
 open RE
@@ -17,7 +13,7 @@ variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 
 /-- Main correctness of reversal. -/
 theorem models_reversal {R : RE α} {sp : Span σ} :
-  sp ⊨ R ↔ sp.reverse ⊨ (R ʳ) :=
+  sp ⊫ R ↔ sp.reverse ⊫ (R ʳ) :=
   match R with
   | ε => by aesop
   | Pred φ =>
@@ -27,8 +23,7 @@ theorem models_reversal {R : RE α} {sp : Span σ} :
       | [] => by simp
       | a::us => by
         simp; intro h;
-        have hp : us = [] := by simp[List.length_eq_zero.mp] at *;
-                                rw [List.length_eq_zero] at h; assumption
+        have hp : us = [] := by cases us; rfl; simp at h
         aesop
   | l ⬝ r => by
     have : (star_metric l) < (star_metric (l ⬝ r)) := star_metric_Cat_l
@@ -96,8 +91,5 @@ theorem models_reversal {R : RE α} {sp : Span σ} :
   | ~ r    => by
     have : star_metric r < star_metric (Negation r) := star_metric_Negation;
     simp [@models_reversal r] -- inductive hypothesis
-termination_by
-  models_reversal sp r _ => star_metric r
-decreasing_by
-  simp only[InvImage, WellFoundedRelation.rel]
-  assumption
+termination_by star_metric R
+decreasing_by repeat {assumption}
