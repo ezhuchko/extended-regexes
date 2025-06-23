@@ -1,4 +1,5 @@
-import Mathlib.Order.BooleanAlgebra
+import Mathlib.Order.BooleanAlgebra.Defs
+import Mathlib.Order.BooleanAlgebra.Basic
 
 /-!
 # Main definitions
