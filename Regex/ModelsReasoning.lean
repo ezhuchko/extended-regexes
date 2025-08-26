@@ -12,7 +12,7 @@ its interaction with `reverse_regex`.
 
 variable {α σ : Type} [EffectiveBooleanAlgebra α σ] {r p q : RE α}
 
-/-- correctness of regular expressions. -/
+/-- Correctness of regular expressions. -/
 def models_equivalence (r q : RE α) : Prop :=
   ∀ {sp}, sp ⊫ r ↔ sp ⊫ q
 

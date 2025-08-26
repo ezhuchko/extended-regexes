@@ -2,12 +2,64 @@ import Regex.Definitions
 
 open RE
 
-/--
+/-
 # Metrics
 
 Collection of all the various metrics used in the formalization
 to ensure the well-foundedness of the algorithm.
 -/
+
+/-- Size of metric function, counting the number of constructors. -/
+@[simp]
+def sizeOf_RE (R : RE α) : Nat :=
+  match R with
+  | ε       => 0
+  | Pred _  => 0
+  | l ⋓ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | l ⋒ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | l ⬝ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | .Star r => 1 + sizeOf_RE r
+  | ~ r     => 1 + sizeOf_RE r
+  | ?= r    => 1 + sizeOf_RE r
+  | ?<= r   => 1 + sizeOf_RE r
+  | ?! r    => 1 + sizeOf_RE r
+  | ?<! r   => 1 + sizeOf_RE r
+
+/-- Lookaround height, counting the level of nested applications of lookarounds. -/
+@[simp]
+def lookaround_height (R : RE α) : Nat :=
+  match R with
+  | ε       => 0
+  | Pred _  => 0
+  | l ⋓ r   => max (lookaround_height l) (lookaround_height r)
+  | l ⋒ r   => max (lookaround_height l) (lookaround_height r)
+  | l ⬝ r   => max (lookaround_height l) (lookaround_height r)
+  | .Star r => lookaround_height r
+  | ~ r     => lookaround_height r
+  | ?= r    => 1 + lookaround_height r
+  | ?<= r   => 1 + lookaround_height r
+  | ?! r    => 1 + lookaround_height r
+  | ?<! r   => 1 + lookaround_height r
+
+/-- Lexicographic combination of star height and size of regexp. -/
+@[simp]
+def star_metric (R : RE α) : Nat ×ₗ Nat :=
+  match R with
+  | ε       => (0, 0)
+  | Pred _  => (0, 0)
+  | l ⋓ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
+  | l ⋒ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
+  | l ⬝ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
+  | .Star r => (1 + (star_metric r).1, 1 + (star_metric r).2)
+  | ~ r     => ((star_metric r).1, 1 + (star_metric r).2)
+  | ?= r    => ((star_metric r).1, 1 + (star_metric r).2)
+  | ?<= r   => ((star_metric r).1, 1 + (star_metric r).2)
+  | ?! r    => ((star_metric r).1, 1 + (star_metric r).2)
+  | ?<! r   => ((star_metric r).1, 1 + (star_metric r).2)
+
+instance : WellFoundedRelation (Nat ×ₗ Nat) where
+  rel := (· < ·)
+  wf  := WellFounded.prod_lex WellFoundedRelation.wf WellFoundedRelation.wf
 
 @[simp]
 theorem sizeOf_reverse_RE (r : RE α) :
@@ -54,18 +106,15 @@ instance : WellFoundedRelation (Nat ×ₗ Nat ×ₗ Nat ×ₗ Nat) where
   We employ a trick on the metric used with Nat being either 0/1 to
   ensure that existsMatch will be prioritized in determining the termination order.
 -/
-
--- @[simp]
 def der_termination_metric (r : RE α) (x : Loc σ) (n : Nat) : Nat ×ₗ Nat ×ₗ Nat ×ₗ Nat :=
   (lookaround_height r, sizeOf x.right, sizeOf_RE r, n)
 
--- @[simp]
 def der_metric (r : RE α) : Nat ×ₗ Nat :=
   (sizeOf_RE r, lookaround_height r)
 
-/-- Lemmas on the metric functions defined previously. -/
+/- Lemmas on the metric functions defined previously. -/
 
-/- Lookaround is preserved by reversal. -/
+/-- Lookaround is preserved by reversal. -/
 theorem lookaround_height_reverse_RE (r : RE α) :
   lookaround_height r = lookaround_height (r ʳ) :=
   match r with
@@ -75,6 +124,7 @@ theorem lookaround_height_reverse_RE (r : RE α) :
   | .Star r | ~ r | ?= r | ?<= r | ?! r | ?<! r => by simp[←lookaround_height_reverse_RE r]
 
 /- Coherence with respect to the derivative termination metric and constructors. -/
+
 @[simp]
 theorem lookaround_height_Cat_L :
   der_termination_metric l x 0 < der_termination_metric (l ⬝ r) x 0 := by

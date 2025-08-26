@@ -36,58 +36,6 @@ prefix:max "?<=" => Lookbehind
 prefix:max "?!"  => NegLookahead
 prefix:max "?<!" => NegLookbehind
 
-/-- Size of metric function, counting the number of constructors. -/
-@[simp]
-def sizeOf_RE (R : RE α) : Nat :=
-  match R with
-  | ε       => 0
-  | Pred _  => 0
-  | l ⋓ r   => 1 + sizeOf_RE l + sizeOf_RE r
-  | l ⋒ r   => 1 + sizeOf_RE l + sizeOf_RE r
-  | l ⬝ r   => 1 + sizeOf_RE l + sizeOf_RE r
-  | .Star r => 1 + sizeOf_RE r
-  | ~ r     => 1 + sizeOf_RE r
-  | ?= r    => 1 + sizeOf_RE r
-  | ?<= r   => 1 + sizeOf_RE r
-  | ?! r    => 1 + sizeOf_RE r
-  | ?<! r   => 1 + sizeOf_RE r
-
-/-- Lookaround height, counting the level of nested applications of lookarounds. -/
-@[simp]
-def lookaround_height (R : RE α) : Nat :=
-  match R with
-  | ε       => 0
-  | Pred _  => 0
-  | l ⋓ r   => max (lookaround_height l) (lookaround_height r)
-  | l ⋒ r   => max (lookaround_height l) (lookaround_height r)
-  | l ⬝ r   => max (lookaround_height l) (lookaround_height r)
-  | .Star r => lookaround_height r
-  | ~ r     => lookaround_height r
-  | ?= r    => 1 + lookaround_height r
-  | ?<= r   => 1 + lookaround_height r
-  | ?! r    => 1 + lookaround_height r
-  | ?<! r   => 1 + lookaround_height r
-
-/-- Lexicographic combination of star height and size of regexp. -/
-@[simp]
-def star_metric (R : RE α) : Nat ×ₗ Nat :=
-  match R with
-  | ε       => (0, 0)
-  | Pred _  => (0, 0)
-  | l ⋓ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
-  | l ⋒ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
-  | l ⬝ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
-  | .Star r => (1 + (star_metric r).1, 1 + (star_metric r).2)
-  | ~ r     => ((star_metric r).1, 1 + (star_metric r).2)
-  | ?= r    => ((star_metric r).1, 1 + (star_metric r).2)
-  | ?<= r   => ((star_metric r).1, 1 + (star_metric r).2)
-  | ?! r    => ((star_metric r).1, 1 + (star_metric r).2)
-  | ?<! r   => ((star_metric r).1, 1 + (star_metric r).2)
-
-instance : WellFoundedRelation (Nat ×ₗ Nat) where
-  rel := (· < ·)
-  wf  := WellFounded.prod_lex WellFoundedRelation.wf WellFoundedRelation.wf
-
 /-- Reversal function for regular expressions. -/
 @[simp]
 def RE.reverse (R : RE α) : RE α :=
