@@ -1,6 +1,6 @@
 # Lean Formalization of Extended Regular Expression Matching with Lookarounds
 
-This repo contains the Lean formalization files for the paper "Lean Formalization of Extended Regular Expression Matching with Lookarounds" by Ekaterina Zhuchko, Margus Veanes and Gabriel Ebner.
+This repo contains the Lean formalization files for a matching algorithm based on regular expression derivatives. 
 
 ## Quick start
 
@@ -10,7 +10,9 @@ Typecheck the top-level file `Regex/Regex.lean`, which collects all modules of t
 
 Listed below is a brief description of each file of the formalization.
 
-- `Definitions`: main definitions common to all files: EBAs, regex, spans, locations.
+- `EBA` : definition of Effective Boolean Algebra.
+- `Span` : definitions of Spans, Locations and useful operations on these.
+- `Definitions`: main definitions common to all files i.e. regex, reverse operation.
 - `Correctness`: equivalence theorem between `models` and `derives`.
 - `Examples`: running examples shown in the paper, showcasing the algorithm in action.
 - `Models`: classical matching semantics, defined on locations and spans.
