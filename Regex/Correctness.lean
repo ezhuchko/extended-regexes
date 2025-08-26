@@ -21,7 +21,7 @@ theorem derives_Bot : (sp ⊢ (Pred ⊥ : RE α)) = false :=
       simp;
       by_cases h : (denote (⊥ : α) a)
       . simp at h
-      . apply derives_Bot
+      . exact derives_Bot
 termination_by sp.2.1
 
 theorem derives_Eps  :
@@ -30,9 +30,7 @@ theorem derives_Eps  :
   | ⟨s,u,v⟩ =>
    match u with
    | [] => by simp
-   | a::u => by
-     simp [derives]
-     apply derives_Bot
+   | a::u => by simp [derives]; exact derives_Bot
 
 theorem derives_Pred :
   sp ⊢ (Pred φ : RE α) ↔ sp.match.length = 1 ∧ sp.match_head?.any (denote φ) :=
@@ -42,10 +40,8 @@ theorem derives_Pred :
     | [] => by simp
     | a::u => by
       by_cases h1 : denote φ a
-      . simp at *; rw[h1]; simp [derives_Eps, Option.any, h1]
-      . simp at h1; simp at *;
-        have contra : derives (a::s, u, v) (Pred ⊥ : RE α) = false := derives_Bot;
-        rw [h1]; simp; aesop
+      . simp; rw[h1]; simp [derives_Eps]
+      . simp[h1]; exact derives_Bot
 
 theorem derives_to_existsMatch {loc : Loc σ} {r : RE α} :
   existsMatch r loc ↔ ∃ sp, sp ⊢ r ∧ sp.beg = loc :=
@@ -95,8 +91,7 @@ theorem derives_Lookahead {r : RE α} :
   ⟨ λ h =>
     match sp with
     | ⟨s,[],v⟩ => by
-      simp at h;
-      simp;
+      simp at h; simp;
       rw [derives_to_existsMatch] at h;
       simp at h; exact h
     | ⟨s,a::u,v⟩ => by
@@ -393,12 +388,12 @@ theorem correctness {R : RE α} : sp ⊢ R ↔ sp ⊫ R :=
     have : star_metric r < star_metric (Negation r) := star_metric_Negation
     rw [derives_Negation]
     simp [@correctness _ r] -- induction hypothesis
-  | r *    => by
+  | .Star r => by
     have : star_metric r < star_metric (Star r) := star_metric_Star
     simp [derives_Star];
-    refine exists_congr fun m => ?_
+    exact exists_congr fun m =>
     have : star_metric (r⁽m⁾) < star_metric r* := star_metric_repeat
-    simp [@correctness _ (repeat_cat r m)] -- induction hypothesis
+    (by simp [@correctness _ (repeat_cat r m)]) -- induction hypothesis
   | l ⋒ r  => by
     have : star_metric l < star_metric (l ⋒ r) := star_metric_Inter_l
     have : star_metric r < star_metric (l ⋒ r) := star_metric_Inter_r
@@ -415,7 +410,8 @@ theorem correctness {R : RE α} : sp ⊢ R ↔ sp ⊫ R :=
     rw [derives_Cat]
     simp [@correctness _ l, @correctness _ r] -- induction hypothesis
 termination_by star_metric R
-decreasing_by repeat {assumption}
+decreasing_by
+  repeat {assumption}
 
 /- Main reversal theorem using the derivation relation instead of `models`. -/
 theorem derives_reversal {R : RE α} : sp ⊢ R ↔ sp.reverse ⊢ (R ʳ) :=

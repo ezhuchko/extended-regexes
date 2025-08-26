@@ -15,16 +15,13 @@ variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 theorem models_reversal {R : RE α} {sp : Span σ} :
   sp ⊫ R ↔ sp.reverse ⊫ (R ʳ) :=
   match R with
-  | ε => by aesop
+  | ε => by match sp with | ⟨s,u,v⟩ => simp
   | Pred φ =>
     match sp with
     | ⟨s, u, v⟩ =>
       match u with
       | [] => by simp
-      | a::us => by
-        simp; intro h;
-        have hp : us = [] := by cases us; rfl; simp at h
-        aesop
+      | a::us => by simp; intro h; subst h; simp
   | l ⬝ r => by
     have : (star_metric l) < (star_metric (l ⬝ r)) := star_metric_Cat_l
     have : (star_metric r) < (star_metric (l ⬝ r)) := star_metric_Cat_r
@@ -45,51 +42,44 @@ theorem models_reversal {R : RE α} {sp : Span σ} :
     have : star_metric l < star_metric (l ⋒ r) := star_metric_Inter_l
     have : star_metric r < star_metric (l ⋒ r) := star_metric_Inter_r
     simp [@models_reversal l, @models_reversal r] -- inductive hypothesis
-  | r *    => by
+  | .Star r => by
     have : star_metric r < star_metric (r *) := star_metric_Star
     match sp with
     | ⟨s, u, v⟩ =>
-      unfold RE.reverse; simp;
-      refine exists_congr fun m => ?_
-      match m with
-      | 0 => simp
-      | .succ m =>
-        have : star_metric (r⁽Nat.succ m⁾) < star_metric r* := star_metric_repeat
-        simp only [@models_reversal (repeat_cat r m.succ)] -- inductive hypothesis
-        exact (equiv_trans (equiv_cat_cong equiv_reverse_regex_repeat_cat equiv_refl) equiv_repeat_cat_cat)
+      unfold RE.reverse; simp
+      exact exists_congr fun m =>
+      (match m with
+       | 0 => by simp
+       | .succ m => by
+         have : star_metric (r⁽Nat.succ m⁾) < star_metric r* := star_metric_repeat
+         simp only [@models_reversal (repeat_cat r m.succ)] -- inductive hypothesis
+         exact (equiv_trans (equiv_cat_cong equiv_reverse_regex_repeat_cat equiv_refl) equiv_repeat_cat_cat))
   | ?= r   => by
     have : (star_metric r) < (star_metric (?= r)) := star_metric_Lookahead
     have : star_metric r < star_metric ?<=r := star_metric_NegLookbehind
     match sp with
-    | ⟨s, u, v⟩ =>
-      simp [@models_reversal r] -- inductive hypothesis
+    | ⟨s, u, v⟩ => simp [@models_reversal r] -- inductive hypothesis
   | ?<= r  => by
     have : star_metric r < star_metric ?<=r := star_metric_NegLookbehind
     match sp with
     | ⟨s, u, v⟩ =>
       simp [@models_reversal r] -- inductive hypothesis
       intro _
-      refine exists_congr fun m => ?_
-      simp; intro h1 h2; subst h1;
-      match m with
-      | ⟨ss,uu,vv⟩ => simp
+      exact exists_congr fun m => (by simp; intro h1 h2; subst h1; match m with | ⟨ss,uu,vv⟩ => simp)
   | ?! r   => by
     have : star_metric r < star_metric ?!r := star_metric_NegLookahead
     match sp with
-    | ⟨s, u, v⟩ =>
-      simp [@models_reversal r] -- inductive hypothesis
+    | ⟨s, u, v⟩ => simp [@models_reversal r] -- inductive hypothesis
   | ?<! r  => by
     have : star_metric r < star_metric ?<!r := star_metric_NegLookbehind
     match sp with
     | ⟨s, u, v⟩ =>
-      simp
-      intro _
+      simp; intro _
       simp [@models_reversal r] -- inductive hypothesis
-      refine forall_congr' fun m => ?_
-      match m with
-      | ⟨ss, uu, vv⟩ => simp
+      exact forall_congr' fun m => (match m with | ⟨ss, uu, vv⟩ => by simp)
   | ~ r    => by
     have : star_metric r < star_metric (Negation r) := star_metric_Negation;
     simp [@models_reversal r] -- inductive hypothesis
 termination_by star_metric R
-decreasing_by repeat {assumption}
+decreasing_by
+  repeat {assumption}

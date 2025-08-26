@@ -4,22 +4,21 @@ import Regex.Metrics
 open RE BA
 
 /-!
-# Derivatives and derivation relation
+  # Derivatives and derivation relation
 
-Contains the specifpication of the derivation relation, which directly uses Bool
-to represent whether a span is a match for a regex.
+  Contains the specification of the derivation relation, which directly uses Bool
+  to represent whether a span is a match for a regex.
 
-The main approach here is to define nullability and derivation of regex with
-respect to the span. The `existsMatch` is defined to represent the existence of a match in the
-lookahead and lookbehind cases.
+  The main approach here is to define nullability and derivation of regex with
+  respect to the span. The `existsMatch` is defined to represent the existence of a match in the
+  lookahead and lookbehind cases.
 
-The definition is somewhat technical to ensure that it is
-well-founded, and thus ensure that it is decidable.
+  The definition is somewhat technical to ensure that it is well-founded, and thus ensure that it is decidable.
 
-The correctness of the `derives` algorithm then implies that the `models` semantics is decidable.
+  The correctness of the `derives` algorithm then implies that the `models` semantics is decidable.
 
-We employ a trick on the metric used (`der_termination_metric`) with Nat being either 0/1 to
-ensure that existsMatch is prioritized in determining the termination order (see `termination_by`).
+  We employ a trick on the metric used (`der_termination_metric`) with Nat being either 0/1 to
+  ensure that `existsMatch` is prioritized in determining the termination order (see `termination_by`).
 -/
 variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 
@@ -27,18 +26,20 @@ mutual
   @[simp]
   def null (R : RE α) (x : Loc σ) : Bool :=
     match R with
-    | ε      => true
-    | Pred _ => false
-    | L ⬝ R  => null L x && null R x
-    | L ⋓ R  => null L x || null R x
-    | L ⋒ R  => null L x && null R x
-    | _ *    => true
-    | ~ R    => ¬ null R x
-    | ?= R   => existsMatch R x
-    | ?<= R  => existsMatch (R ʳ) (x.snd, x.fst)
-    | ?! R   => ¬ existsMatch R x
-    | ?<! R  => ¬ existsMatch (R ʳ) (x.snd, x.fst)
+    | ε       => true
+    | Pred _  => false
+    | L ⬝ R   => null L x && null R x
+    | L ⋓ R   => null L x || null R x
+    | L ⋒ R   => null L x && null R x
+    | .Star _ => true
+    | ~ R     => ¬ null R x
+    | ?= R    => existsMatch R x
+    | ?<= R   => existsMatch (R ʳ) (x.snd, x.fst)
+    | ?! R    => ¬ existsMatch R x
+    | ?<! R   => ¬ existsMatch (R ʳ) (x.snd, x.fst)
   termination_by der_termination_metric R x 0
+  decreasing_by
+    repeat { simp }
 
   @[simp]
   def existsMatch (R : RE α) (x : Loc σ) : Bool :=
@@ -52,11 +53,7 @@ mutual
       null R (s, a::v) || existsMatch R' (a::s, v)
   termination_by der_termination_metric R x 1
   decreasing_by
-    unfold der_termination_metric; simp; apply Prod.Lex.right; apply Prod.Lex.right; apply Prod.Lex.right; linarith
-    unfold der_termination_metric; simp; apply Prod.Lex.right; apply Prod.Lex.right; apply Prod.Lex.right; linarith
-    unfold der_termination_metric; simp; apply Prod.Lex.right; apply Prod.Lex.right; apply Prod.Lex.right; linarith
-    apply this
-
+    repeat { first | unfold der_termination_metric; apply Prod.Lex.right; apply Prod.Lex.right; apply Prod.Lex.right; linarith | assumption }
 
    /-- Derivative of a regular expression in a location.
        Note the use of the subtype to ensure that the height of the derivative is
@@ -94,7 +91,7 @@ mutual
       have ⟨g, hg⟩ := der L x;
       have ⟨f, hf⟩ := der R x;
       max_le_max hg hf⟩
-   | R *   =>
+   | .Star R =>
      ⟨(der R x) ⬝ R *, have ⟨g, hg⟩ := der R x;
                        by simp; exact hg⟩
    | ~ R   => ⟨~(der R x), (der R x).2⟩
@@ -114,65 +111,3 @@ def derives (sp : Span σ) (R : RE α) : Bool :=
 termination_by sp.2.1
 
 infix:40 " ⊢ " => derives
-
------------------------------------------------------------------------------------------------------
-
-mutual
-def der₁ (R : RE α) (x : Loc σ) : RE α :=
-  match R with
-  | ε      => Pred ⊥
-  | Pred φ =>
-    match x with
-    | (_ , [])   => Pred ⊥
-    | (_ , a::_) => if denote φ a then ε else Pred ⊥
-  | L ⬝ R => der₁ L x ⬝ R ⋓ (der₂ L x) ⬝ der₁ R x
-  | L ⋓ R => der₁ L x ⋓ der₁ R x
-  | L ⋒ R => der₁ L x ⋒ der₁ R x
-  | R *   => (der₁ R x) ⬝ R *
-  | ~ R   => ~ (der₁ R x)
-  | ?= _  => Pred ⊥
-  | ?<= _ => Pred ⊥
-  | ?! _  => Pred ⊥
-  | ?<! _ => Pred ⊥
-  termination_by sizeOf_RE R
-
-def der₂ (R : RE α) (x : Loc σ) : RE α :=
-  match R with
-  | ε      => ε
-  | Pred _ => Pred ⊥
-  | L ⬝ R  => der₂ L x ⬝ der₂ R x
-  | L ⋓ R  => der₂ L x ⋓ der₂ R x
-  | L ⋒ R  => der₂ L x ⋒ der₂ R x
-  | _ *    => ε
-  | ~ R    => ~ (der₂ R x)
-  | ?= R   => ?= (der₁ R x ⋓ der₂ R x)
-  | ?<= R  => ?<= (der₁ R x ⋓ der₂ R x)
-  | ?! R   => ?! (der₁ R x ⋓ der₂ R x)
-  | ?<! R  => ?<! (der₁ R x ⋓ der₂ R x)
-  termination_by sizeOf_RE R
-end
-
-def null₁ (R : RE α) : Bool :=
-  match R with
-  | ε      => true
-  | Pred _ => false
-  | L ⬝ R  => null₁ L && null₁ R
-  | L ⋓ R  => null₁ L || null₁ R
-  | L ⋒ R  => null₁ L && null₁ R
-  | _ *    => true
-  | ~ R    => ¬ null₁ R
-  | ?= R   => null₁ R
-  | ?<= R  =>
-    have : sizeOf_RE Rʳ < 1 + sizeOf_RE R := by rw[sizeOf_reverse_RE' R]; linarith
-    null₁ Rʳ
-  | ?! R   => ¬ null₁ R
-  | ?<! R  =>
-    have : sizeOf_RE Rʳ < 1 + sizeOf_RE R := by rw[sizeOf_reverse_RE' R]; linarith
-    ¬ null₁ (R ʳ)
-termination_by sizeOf_RE R
-
-def derives₁ (sp : Span σ) (R : RE α) : Bool :=
-  match sp with
-  | ⟨_, [], _⟩   => null₁ R
-  | ⟨s, a::u, v⟩ => derives₁ ⟨a::s, u, v⟩ (der₁ R sp.beg)
-termination_by sp.2.1

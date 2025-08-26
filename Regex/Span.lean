@@ -1,22 +1,22 @@
 import Mathlib.Tactic.Linarith
 
 /--
-Main definition of a span.
-Note that, semantically speaking, the first component of the span is supposed to be reversed.
-However, we do not enforce this in the type, as it would complicate the definition of operations.
-Components:
-  - left context (reversed)
-  - match
-  - right context
+  Main definition of a span.
+  Note that, semantically speaking, the first component of the span is supposed to be reversed.
+  However, we do not enforce this in the type, as it would complicate the definition of operations.
+  Components:
+    - left context (reversed)
+    - match
+    - right context
 -/
 def Span (σ : Type) := List σ × List σ × List σ
 
 /--
-Locations.
-Similarly to spans, the first component is supposed to be reversed.
-Components:
-  - left context (reversed)
-  - right context
+  Locations.
+  Similarly to spans, the first component is supposed to be reversed.
+  Components:
+    - left context (reversed)
+    - right context
 -/
 def Loc (σ : Type) := List σ × List σ
 
@@ -35,7 +35,7 @@ def Loc.pos (loc : Loc σ) : Nat := loc.1.length
 @[simp]
 def Loc.right (loc : Loc σ) : List σ := loc.2
 
-/-- Entire word represented whose location refers to. -/
+/-- Construct the entire word represented by the given location. -/
 @[simp]
 def Loc.word (loc : Loc σ) : List σ := loc.left.reverse ++ loc.right
 
@@ -48,7 +48,7 @@ def Loc.reverse (loc : Loc σ) : Loc σ :=
 /-- Reversal of locations is an involution. -/
 def reverse_loc_involution {loc : Loc σ} : loc.reverse.reverse = loc :=
   match loc with
-  | ⟨s, u⟩ => by simp
+  | ⟨s, u⟩ => by simp only [Loc.reverse]
 
 /-- Consider a location as end location (i.e.: reverse the entire word on the left, have no remaining characters on the right) -/
 @[simp]
@@ -79,19 +79,19 @@ def Span.reverse_match (sp : Span σ) : Span σ :=
 @[simp]
 theorem reverse_span_involution {sp : Span σ} : sp.reverse.reverse = sp :=
   match sp with
-  | ⟨s,u,v⟩ => by simp
+  | ⟨s,u,v⟩ => by simp only [Span.reverse, List.reverse_reverse]
 
 -- (s, uʳʳ, v) = (s, u, v)
 @[simp]
 theorem reverse_match_involution {sp : Span σ} : sp.reverse_match.reverse_match = sp :=
   match sp with
-  | ⟨s,u,v⟩ => by simp
+  | ⟨s,u,v⟩ => by simp only [Span.reverse_match, List.reverse_reverse]
 
 /-
 ## Main accessors for span
 -/
 
-/-- (Sʳ, _, _) -/
+/-- (sʳ, _, _) -/
 @[simp]
 def Span.left (sp : Span σ) : List σ := sp.1
 

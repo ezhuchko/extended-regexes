@@ -35,7 +35,7 @@ def models (sp : Span σ) (R : RE α) : Prop :=
     have : star_metric l < star_metric (l ⋒ r) := star_metric_Inter_l
     have : star_metric r < star_metric (l ⋒ r) := star_metric_Inter_r
     models sp l ∧ models sp r
-  | r *    =>
+  | .Star r =>
     ∃ (m : ℕ),
     have : star_metric (r ⁽ m ⁾) < star_metric (r *) := star_metric_repeat
     models sp (r ⁽ m ⁾)
@@ -55,6 +55,7 @@ def models (sp : Span σ) (R : RE α) : Prop :=
     have : star_metric r < star_metric (?<= r) := star_metric_Lookbehind
     sp.match.length = 0 ∧ ¬ (∃ (spM : Span σ), models spM.reverse r ∧ spM.beg = sp.reverse.beg)
 termination_by star_metric R
-decreasing_by simp_wf; repeat assumption
+decreasing_by
+  simp_wf; repeat assumption
 
 notation:52 lhs:53 " ⊫ " rhs:53 => models lhs rhs

@@ -1,5 +1,5 @@
 import Regex.Reversal
-import Regex.Correctness -- needed for reversal of derives
+import Regex.Correctness -- needed for reversal of `derives`
 
 open RE
 
@@ -20,12 +20,13 @@ def null? (r : RE α) (x : Loc σ) : Option (Span σ) :=
   else
     none
 
-/-- Main helper function for the top-level matching algorithm.
-    Given a start position, returns the span with longest
-    match size such that the input regex matches the output span.
-    Note that the start location of the input is the same
-    as of that of the output one, crucially using `increase_match_left`
-    in the inductive case.
+/--
+  Main helper function for the top-level matching algorithm.
+  Given a start position, returns the span with longest
+  match size such that the input regex matches the output span.
+  Note that the start location of the input is the same
+  as of that of the output one, crucially using `increase_match_left`
+  in the inductive case.
 -/
 @[simp]
 def maxMatchEnd (r : RE α) (x : Loc σ) : Option (Span σ) :=
@@ -78,8 +79,7 @@ termination_by x.right
 /-- Given a precise split on the left location, derive that the entire word coincides. -/
 def split_as_loc_word {x : Loc σ} {sp : Span σ}
   (h : sp.beg = x) : sp.word = x.word := by
-  subst h
-  simp_all
+  subst h; simp_all
 
 /-- The span output by `maxMatchEnd` is indeed a match for the regex given. -/
 theorem maxMatchEnd_matches {x : Loc σ} {r : RE α} {sp_out : Span σ}
@@ -415,7 +415,7 @@ theorem minMatchStart_derivesEndLocation {r : RE α} {x : Loc σ} {sp_out : Span
   | none => rw[eqq] at matching; simp at matching;
   | some a =>
     rw[eqq] at matching;
-    simp only [Option.map_some', Option.some.injEq] at matching
+    simp only [Option.map_some, Option.some.injEq] at matching
     subst matching
     have pip := maxMatchEnd_derivesStartLocation eqq
     have := match_start_end pip
@@ -431,7 +431,7 @@ theorem minMatchStart_matches {r : RE α} {sp_out : Span σ}
   | none => rw[eqq] at matching; simp at matching;
   | some a =>
     rw[eqq] at matching;
-    simp only [Option.map_some', Option.some.injEq] at matching
+    simp only [Option.map_some, Option.some.injEq] at matching
     subst matching
     have correct := maxMatchEnd_matches eqq
     have eq := @reverse_span_involution _ a

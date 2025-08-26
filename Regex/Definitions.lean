@@ -38,53 +38,53 @@ prefix:max "?<!" => NegLookbehind
 
 /-- Size of metric function, counting the number of constructors. -/
 @[simp]
-def sizeOf_RE (R : RE α) : ℕ :=
+def sizeOf_RE (R : RE α) : Nat :=
   match R with
-  | ε      => 0
-  | Pred _ => 0
-  | l ⋓ r  => 1 + sizeOf_RE l + sizeOf_RE r
-  | l ⋒ r  => 1 + sizeOf_RE l + sizeOf_RE r
-  | l ⬝ r  => 1 + sizeOf_RE l + sizeOf_RE r
-  | r *    => 1 + sizeOf_RE r
-  | ~ r    => 1 + sizeOf_RE r
-  | ?= r   => 1 + sizeOf_RE r
-  | ?<= r  => 1 + sizeOf_RE r
-  | ?! r   => 1 + sizeOf_RE r
-  | ?<! r  => 1 + sizeOf_RE r
+  | ε       => 0
+  | Pred _  => 0
+  | l ⋓ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | l ⋒ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | l ⬝ r   => 1 + sizeOf_RE l + sizeOf_RE r
+  | .Star r => 1 + sizeOf_RE r
+  | ~ r     => 1 + sizeOf_RE r
+  | ?= r    => 1 + sizeOf_RE r
+  | ?<= r   => 1 + sizeOf_RE r
+  | ?! r    => 1 + sizeOf_RE r
+  | ?<! r   => 1 + sizeOf_RE r
 
 /-- Lookaround height, counting the level of nested applications of lookarounds. -/
 @[simp]
-def lookaround_height (R : RE α) : ℕ :=
+def lookaround_height (R : RE α) : Nat :=
   match R with
-  | ε      => 0
-  | Pred _ => 0
-  | l ⋓ r  => max (lookaround_height l) (lookaround_height r)
-  | l ⋒ r  => max (lookaround_height l) (lookaround_height r)
-  | l ⬝ r  => max (lookaround_height l) (lookaround_height r)
-  | r *    => lookaround_height r
-  | ~ r    => lookaround_height r
-  | ?= r   => 1 + lookaround_height r
-  | ?<= r  => 1 + lookaround_height r
-  | ?! r   => 1 + lookaround_height r
-  | ?<! r  => 1 + lookaround_height r
+  | ε       => 0
+  | Pred _  => 0
+  | l ⋓ r   => max (lookaround_height l) (lookaround_height r)
+  | l ⋒ r   => max (lookaround_height l) (lookaround_height r)
+  | l ⬝ r   => max (lookaround_height l) (lookaround_height r)
+  | .Star r => lookaround_height r
+  | ~ r     => lookaround_height r
+  | ?= r    => 1 + lookaround_height r
+  | ?<= r   => 1 + lookaround_height r
+  | ?! r    => 1 + lookaround_height r
+  | ?<! r   => 1 + lookaround_height r
 
 /-- Lexicographic combination of star height and size of regexp. -/
 @[simp]
-def star_metric (R : RE α) : ℕ ×ₗ ℕ :=
+def star_metric (R : RE α) : Nat ×ₗ Nat :=
   match R with
   | ε       => (0, 0)
   | Pred _  => (0, 0)
   | l ⋓ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
   | l ⋒ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
   | l ⬝ r   => (max (star_metric l).1 (star_metric r).1, 1 + (star_metric l).2 + (star_metric r).2)
-  | r *     => (1 + (star_metric r).1, 1 + (star_metric r).2)
+  | .Star r => (1 + (star_metric r).1, 1 + (star_metric r).2)
   | ~ r     => ((star_metric r).1, 1 + (star_metric r).2)
   | ?= r    => ((star_metric r).1, 1 + (star_metric r).2)
   | ?<= r   => ((star_metric r).1, 1 + (star_metric r).2)
   | ?! r    => ((star_metric r).1, 1 + (star_metric r).2)
   | ?<! r   => ((star_metric r).1, 1 + (star_metric r).2)
 
-instance : WellFoundedRelation (ℕ ×ₗ ℕ) where
+instance : WellFoundedRelation (Nat ×ₗ Nat) where
   rel := (· < ·)
   wf  := WellFounded.prod_lex WellFoundedRelation.wf WellFoundedRelation.wf
 
@@ -92,30 +92,30 @@ instance : WellFoundedRelation (ℕ ×ₗ ℕ) where
 @[simp]
 def RE.reverse (R : RE α) : RE α :=
   match R with
-  | ε      => ε
-  | Pred φ => Pred φ
-  | l ⋓ r  => l.reverse ⋓ r.reverse
-  | l ⋒ r  => l.reverse ⋒ r.reverse
-  | l ⬝ r  => r.reverse ⬝ l.reverse
-  | r *    => r.reverse *
-  | ~ r    => ~ r.reverse
-  | ?= r   => ?<= r.reverse
-  | ?<= r  => ?= r.reverse
-  | ?! r   => ?<! r.reverse
-  | ?<! r  => ?! r.reverse
+  | ε       => ε
+  | Pred φ  => Pred φ
+  | l ⋓ r   => l.reverse ⋓ r.reverse
+  | l ⋒ r   => l.reverse ⋒ r.reverse
+  | l ⬝ r   => r.reverse ⬝ l.reverse
+  | .Star r => r.reverse *
+  | ~ r     => ~ r.reverse
+  | ?= r    => ?<= r.reverse
+  | ?<= r   => ?= r.reverse
+  | ?! r    => ?<! r.reverse
+  | ?<! r   => ?! r.reverse
 
 postfix:max "ʳ" => RE.reverse
 
 /-- Encoding of Star using bounded loops. -/
 @[simp]
-def repeat_cat (R : RE σ) (n : ℕ) : RE σ :=
+def repeat_cat (R : RE σ) (n : Nat) : RE σ :=
   match n with
   | 0          => ε
   | Nat.succ n => R ⬝ (repeat_cat R n)
 
 notation f "⁽" n "⁾" => repeat_cat f n
 
--- /-- Elementary denotation predicates for (Unicode) characters. -/
+/-- Elementary denotation predicates for (Unicode) characters. -/
 instance : Denotation Char Char where
   denote a b := a == b
 
@@ -126,6 +126,10 @@ def String.toRE (s : String) : RE (BA Char) :=
 /-- Implicit coercion to convert strings to regexp to make them more readable. -/
 instance : Coe String (RE (BA Char)) where
   coe := String.toRE
+
+/-- Implicit coercion to convert chars to regexp. -/
+instance : Coe Char (RE (BA Char)) where
+  coe c := Pred (.atom c)
 
 /-- Helper function to obtain a string as character class. -/
 def String.characterClass (s : String) : BA Char :=
