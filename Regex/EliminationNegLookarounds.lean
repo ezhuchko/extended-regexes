@@ -123,6 +123,6 @@ theorem eliminationNegLookaroundsR {R : RE α} {sp : Span σ} :
     | a::u => by simp at h
 
 /- The main result which implies that if we add \z as primitive regex then negative lookahead is not needed. -/
-theorem eliminationNegLookarounds {R : RE α} {sp : Span σ} :
-  sp ⊫ (?=((~(R ⬝ pad)) ⬝ endAnchor)) ↔ sp ⊫ (?! R) :=
-  ⟨eliminationNegLookaroundsL, eliminationNegLookaroundsR⟩
+theorem nla_elim {R : RE α} :
+  (?! R) ↔ᵣ (?=((~(R ⬝ pad)) ⬝ endAnchor)) :=
+  ⟨eliminationNegLookaroundsR, eliminationNegLookaroundsL⟩

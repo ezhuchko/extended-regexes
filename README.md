@@ -4,7 +4,7 @@ This repo contains the Lean formalization files for a matching algorithm based o
 
 ## Quick start
 
-Typecheck the top-level file `Regex/Regex.lean`, which collects all modules of the formalization.
+Typecheck the top-level file `Regex.lean`, which collects all modules of the formalization.
 
 ## Brief file overview
 
@@ -21,3 +21,5 @@ Listed below is a brief description of each file of the formalization.
 - `Metrics`: metrics on regular expression to show termination of theorems/definitions.
 - `MatchingAlgorithm`: main matching algorithm `llmatch`, with proofs of correctness.
 - `Reversal`: correctness theorem for the reversal function.
+- `EliminationNegLookarounds`: theorem for eliminating negative lookarounds.
+- `Rewrites`: collection of different simplification rules.
