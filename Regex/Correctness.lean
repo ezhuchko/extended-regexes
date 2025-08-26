@@ -286,6 +286,16 @@ theorem derives_Cat {r : RE α} :
                   exact derives_Cat.mpr ⟨t, g2, by simp_all, by simp_all, by simp_all⟩⟩
 termination_by sp.2.1.length
 
+/-- For any span, iterated true always matches. -/
+theorem derives_TopStar {sp : Span σ} : sp ⊢ (Pred (⊤ : α))* :=
+  match sp with
+  | ⟨_,[],_⟩ => by simp
+  | ⟨l,c::m,r⟩ => by
+    let p := @derives_TopStar (sp := ⟨c::l,m,r⟩)
+    simp
+    exact derives_Cat.mpr ⟨[],_,(by simp),p,by simp⟩
+termination_by sp.match.length
+
 theorem derives_Star_mp {r : RE α} :
   sp ⊢ (r *) → ∃ (m : ℕ), sp ⊢ (r ⁽ m ⁾) :=
   λ h =>

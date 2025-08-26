@@ -1,4 +1,3 @@
-import Regex.Reversal
 import Regex.Correctness -- needed for reversal of `derives`
 
 open RE
@@ -492,16 +491,6 @@ theorem minMatchStart_no_match {r : RE α} {x : Loc σ}
     extend the match to cover the rest of word. -/
 @[simp]
 def max_right_extension (sp : Span σ) : Span σ := ⟨sp.left, sp.match ++ sp.right, []⟩
-
-/-- For any span, iterated true always matches. -/
-theorem derives_TopStar {sp : Span σ} : sp ⊢ (Pred (⊤ : α))* :=
-  match sp with
-  | ⟨_,[],_⟩ => by simp
-  | ⟨l,c::m,r⟩ => by
-    let p := @derives_TopStar (sp := ⟨c::l,m,r⟩)
-    simp
-    exact derives_Cat.mpr ⟨[],_,(by simp),p,by simp⟩
-termination_by sp.match.length
 
 /-- Any match can be lifted to the match on the maximal right extension
     and concatenating true to the regex accordingly. -/

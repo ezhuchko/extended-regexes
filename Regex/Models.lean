@@ -1,5 +1,3 @@
-import Regex.Definitions
-import Regex.Metrics
 import Regex.Derives
 
 open RE
@@ -16,7 +14,7 @@ The correctness of the `derives` algorithm then implies that this predicate is d
 variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 
 @[simp]
-def models (sp : Span σ) (R : RE α) : Prop :=
+def RE.models (sp : Span σ) (R : RE α) : Prop :=
   match R with
   | ε      => sp.match.length = 0
   | Pred φ => sp.match.length = 1 ∧ sp.match_head?.any (denote φ)

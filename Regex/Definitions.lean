@@ -56,7 +56,7 @@ postfix:max "ʳ" => RE.reverse
 
 /-- Encoding of Star using bounded loops. -/
 @[simp]
-def repeat_cat (R : RE σ) (n : Nat) : RE σ :=
+def RE.repeat_cat (R : RE σ) (n : Nat) : RE σ :=
   match n with
   | 0          => ε
   | Nat.succ n => R ⬝ (repeat_cat R n)

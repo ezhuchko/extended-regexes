@@ -1,5 +1,4 @@
-import Regex.Models
-import Regex.MatchingAlgorithm
+import Regex.Correctness
 
 /-!
 # Elimination of General Negative Lookarounds
