@@ -11,7 +11,7 @@ open BA RE
 variable {α σ : Type} [EffectiveBooleanAlgebra α σ]
 
 @[simp]
-theorem models_TopStar {sp : Span σ} : sp ⊫ (Pred (⊤ : α))* :=
+theorem RE.models_TopStar {sp : Span σ} : sp ⊫ (Pred (⊤ : α))* :=
   derives_TopStar |> correctness.mp
 
 @[simp]
