@@ -12,17 +12,17 @@ variable (α : Type u) in
 
 /-- Class of regular expressions with lookarounds. -/
 inductive RE : Type _ where
-  | ε                 : RE
-  | Pred (e : α)      : RE
-  | Alternation       : RE → RE → RE
-  | Intersection      : RE → RE → RE
-  | Concatenation     : RE → RE → RE
-  | Star              : RE → RE
-  | Negation          : RE → RE
-  | Lookahead         : RE → RE
-  | Lookbehind        : RE → RE
-  | NegLookahead      : RE → RE
-  | NegLookbehind     : RE → RE
+  | ε
+  | Pred (e : α)
+  | Alternation (l r : RE)
+  | Intersection (l r : RE)
+  | Concatenation (l r : RE)
+  | Star (r : RE)
+  | Negation (r : RE)
+  | Lookahead (r : RE)
+  | Lookbehind (r : RE)
+  | NegLookahead (r : RE)
+  | NegLookbehind (r : RE)
   deriving DecidableEq, Repr
 open RE
 
