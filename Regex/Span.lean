@@ -1,123 +1,73 @@
-import Mathlib.Tactic.Linarith
+/-!
+# Locations and spans
 
-/--
-  Main definition of a span.
-  Note that, semantically speaking, the first component of the span is supposed to be reversed.
-  However, we do not enforce this in the type, as it would complicate the definition of operations.
-  Components:
-    - left context (reversed)
-    - match
-    - right context
--/
-def Span (σ : Type) := List σ × List σ × List σ
-
-/--
-  Locations.
-  Similarly to spans, the first component is supposed to be reversed.
-  Components:
-    - left context (reversed)
-    - right context
--/
-def Loc (σ : Type) := List σ × List σ
-
-/-
-# Operations on Locations
+A location is a position in a word, and a span is a segment of a word. Both store the part of
+the word to the left of them reversed, so that moving one character to the right is a `cons`.
 -/
 
-@[simp]
-def Loc.left (loc : Loc σ) : List σ := loc.1
+/-- A position in a word. -/
+structure Loc (σ : Type) where
+  /-- The characters before the position, reversed. -/
+  left : List σ
+  /-- The characters after the position. -/
+  right : List σ
+  deriving Repr
 
--- (sʳ, _)
-@[simp]
-def Loc.pos (loc : Loc σ) : Nat := loc.1.length
+/-- A segment of a word, i.e. the match of a regex in it. -/
+structure Span (σ : Type) where
+  /-- The characters before the match, reversed. -/
+  left : List σ
+  /-- The matched characters. -/
+  mid : List σ
+  /-- The characters after the match. -/
+  right : List σ
+  deriving Repr
 
--- (_, v)
-@[simp]
-def Loc.right (loc : Loc σ) : List σ := loc.2
+/-! ### Operations on locations -/
 
-/-- Construct the entire word represented by the given location. -/
+/-- The entire word a location refers to. -/
 @[simp]
 def Loc.word (loc : Loc σ) : List σ := loc.left.reverse ++ loc.right
 
-/-- Reversal of locations: notice that the reversal of the word is implicit to the fact that the left is already semantically reversed. -/
+/-- The same position in the reversed word. -/
 @[simp]
-def Loc.reverse (loc : Loc σ) : Loc σ :=
-  match loc with
-  | ⟨s, u⟩ => ⟨u, s⟩
+def Loc.reverse (loc : Loc σ) : Loc σ := ⟨loc.right, loc.left⟩
 
-/-- Reversal of locations is an involution. -/
-def reverse_loc_involution {loc : Loc σ} : loc.reverse.reverse = loc :=
-  match loc with
-  | ⟨s, u⟩ => by simp only [Loc.reverse]
+@[simp]
+theorem Loc.reverse_reverse {loc : Loc σ} : loc.reverse.reverse = loc := rfl
 
-/-- Consider a location as end location (i.e.: reverse the entire word on the left, have no remaining characters on the right) -/
+@[simp]
+theorem Loc.reverse_inj {l₁ l₂ : Loc σ} : l₁.reverse = l₂.reverse ↔ l₁ = l₂ := by
+  obtain ⟨_, _⟩ := l₁; obtain ⟨_, _⟩ := l₂; simp [and_comm]
+
+theorem Loc.reverse_eq_iff {l₁ l₂ : Loc σ} : l₁.reverse = l₂ ↔ l₁ = l₂.reverse := by
+  rw [← Loc.reverse_inj, Loc.reverse_reverse]
+
+/-- The end of the word `w`. -/
 @[simp]
 def List.as_end_location (w : List σ) : Loc σ := ⟨w.reverse, []⟩
 
-/-- Convert a word to a span by having an empty match in the middle. -/
+/-- The empty span at a location. -/
 @[simp]
-def Loc.as_span (l : Loc σ) : Span σ :=
-  ⟨l.1, [], l.2⟩
+def Loc.as_span (l : Loc σ) : Span σ := ⟨l.left, [], l.right⟩
 
-/-
-# Operations on spans
--/
+/-! ### Operations on spans -/
 
--- (sʳ, u, v)ʳ = (v, uʳ, sʳ)
+/-- The same segment in the reversed word. -/
 @[simp]
-def Span.reverse (sp : Span σ) : Span σ :=
-  match sp with
-  | ⟨s, u, v⟩ => ⟨v, u.reverse, s⟩
+def Span.reverse (sp : Span σ) : Span σ := ⟨sp.right, sp.mid.reverse, sp.left⟩
 
--- (s, u, v)ʳm = (s, uʳ, v)
 @[simp]
-def Span.reverse_match (sp : Span σ) : Span σ :=
-  match sp with
-  | ⟨s, u, v⟩ => ⟨s, u.reverse, v⟩
-
--- ((sʳ, u, v)ʳ)ʳ = (sʳ, u, v)
-@[simp]
-theorem reverse_span_involution {sp : Span σ} : sp.reverse.reverse = sp :=
-  match sp with
-  | ⟨s,u,v⟩ => by simp only [Span.reverse, List.reverse_reverse]
-
--- (s, uʳʳ, v) = (s, u, v)
-@[simp]
-theorem reverse_match_involution {sp : Span σ} : sp.reverse_match.reverse_match = sp :=
-  match sp with
-  | ⟨s,u,v⟩ => by simp only [Span.reverse_match, List.reverse_reverse]
-
-/-
-## Main accessors for span
--/
-
-/-- (sʳ, _, _) -/
-@[simp]
-def Span.left (sp : Span σ) : List σ := sp.1
-
-/-- (_, u, _) -/
-@[simp]
-def Span.match (sp : Span σ) : List σ := sp.2.1
-
-/-- (_, _, v) -/
-@[simp]
-def Span.right (sp : Span σ) : List σ := sp.2.2
-
-/-- Everything after the first match position. -/
-@[simp]
-def Span.after (sp : Span σ) : List σ := sp.match ++ sp.right
+theorem reverse_span_involution {sp : Span σ} : sp.reverse.reverse = sp := by
+  obtain ⟨_, _, _⟩ := sp; simp
 
 /-- Start of the match position. -/
 @[simp]
 def Span.i (sp : Span σ) : Nat := sp.left.length
 
-/-- End of the match position. -/
+/-- The entire word a span refers to. -/
 @[simp]
-def Span.j (sp : Span σ) : Nat := sp.i + sp.match.length
-
-/-- (sʳ, u, v) is the entire word s ++ u ++ v that the span refers to. -/
-@[simp]
-def Span.word (sp : Span σ) : List σ := sp.left.reverse ++ sp.match ++ sp.right
+def Span.word (sp : Span σ) : List σ := sp.left.reverse ++ sp.mid ++ sp.right
 
 /-- Increase the match on the left by adding back the last character seen on the left. -/
 @[simp]
@@ -126,37 +76,31 @@ def Span.increase_match_left (sp : Span σ) : Span σ :=
   | ⟨[], u, v⟩ => ⟨[], u, v⟩
   | ⟨a::s, u, v⟩ => ⟨s, a::u, v⟩
 
-/-- Increasing the match on the left still produces a splitting of the original word. -/
-theorem increase_match_left_splitting {sp : Span σ} :
-    sp.increase_match_left.word = sp.word :=
-  match sp with
-  | ⟨[], u, v⟩ => rfl
-  | ⟨a::s, u, v⟩ => by simp
-
-/-- The (begin) location view of a span is simply obtained by concatenating
-    match and remaining characters, thus forgetting the match length. -/
+/-- The location where a span begins. -/
 @[simp]
-def Span.beg (sp : Span σ) : List σ × List σ :=
-  ⟨sp.left, sp.match ++ sp.right⟩
+def Span.beg (sp : Span σ) : Loc σ := ⟨sp.left, sp.mid ++ sp.right⟩
 
-/-- The (end) location view of a span is obtained by reversing the span, converting it to a begin location and reversing it. -/
+/-- The location where a span ends. -/
 @[simp]
-def Span.end (sp : Span σ) : List σ × List σ :=
-  Loc.reverse (sp.reverse.beg)
+def Span.end (sp : Span σ) : Loc σ := ⟨sp.mid.reverse ++ sp.left, sp.right⟩
 
-/-- Two equivalent ways to express a span's end location. -/
-theorem end_loc_equivalence (sp : Span σ) : sp.end = ⟨sp.match.reverse ++ sp.left, sp.right⟩ := by aesop
+/-! ### Reversal swaps beginning and end -/
 
-/-- Take the first character, if not empty. -/
-@[simp]
-def Span.match_head? (sp : Span σ) : Option σ :=
-  let ⟨_,u,_⟩ := sp
-  match u with
-  | []   => none
-  | u::_ => some u
+theorem Span.mid_reverse {sp : Span σ} : sp.reverse.mid = sp.mid.reverse := rfl
+
+theorem Span.beg_reverse {sp : Span σ} : sp.reverse.beg = sp.end.reverse := rfl
+
+theorem Span.end_reverse {sp : Span σ} : sp.reverse.end = sp.beg.reverse := by
+  obtain ⟨s, u, v⟩ := sp; simp
+
+/-- An empty span begins where it ends. -/
+theorem Span.end_eq_beg {sp : Span σ} (h : sp.mid = []) : sp.end = sp.beg := by
+  obtain ⟨s, u, v⟩ := sp; simp_all
+
+/-- Quantifying over spans is the same as quantifying over their reversals. -/
+theorem Span.exists_reverse {p : Span σ → Prop} : (∃ sp, p sp) ↔ ∃ sp : Span σ, p sp.reverse :=
+  ⟨fun ⟨sp, h⟩ => ⟨sp.reverse, by rwa [reverse_span_involution]⟩, fun ⟨_, h⟩ => ⟨_, h⟩⟩
 
 @[simp]
-theorem Span.reverse_word {sp : Span σ} :
-  sp.word.reverse = sp.reverse.word := by
-  match sp with
-  | ⟨s,u,v⟩ => simp
+theorem Span.reverse_word {sp : Span σ} : sp.word.reverse = sp.reverse.word := by
+  obtain ⟨s, u, v⟩ := sp; simp

@@ -1,15 +1,14 @@
 import Mathlib.Data.Prod.Lex
-import Regex.EBA
+import Regex.EffectiveBooleanAlgebra
 import Regex.Span
 
 /-!
 # Main definitions
 
-Contains the definition of regular expressions and some operations on them.
+Contains the definition of regular expressions with lookarounds and operations on them.
 -/
 
 variable (α : Type u) in
-
 /-- Class of regular expressions with lookarounds. -/
 inductive RE : Type _ where
   | ε
@@ -56,7 +55,7 @@ postfix:max "ʳ" => RE.reverse
 
 /-- Encoding of Star using bounded loops. -/
 @[simp]
-def RE.repeat_cat (R : RE σ) (n : Nat) : RE σ :=
+def RE.repeat_cat (R : RE α) (n : Nat) : RE α :=
   match n with
   | 0          => ε
   | Nat.succ n => R ⬝ (repeat_cat R n)
@@ -64,8 +63,8 @@ def RE.repeat_cat (R : RE σ) (n : Nat) : RE σ :=
 notation f "⁽" n "⁾" => repeat_cat f n
 
 /-- Elementary denotation predicates for (Unicode) characters. -/
-instance : Denotation Char Char where
-  denote a b := a == b
+instance : Models Char Char where
+  models a b := a == b
 
 /-- Helper function to convert strings into regexp literals (string as a sequence of characters) -/
 def String.toRE (s : String) : RE (BA Char) :=

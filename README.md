@@ -10,13 +10,13 @@ Typecheck the top-level file `Regex.lean`, which collects all modules of the for
 
 Listed below is a brief description of each file of the formalization.
 
-- `EBA` : definition of Effective Boolean Algebra.
+- `EffectiveBooleanAlgebra`: definition of effective Boolean algebras (shared with the `tterm` project).
 - `Span` : definitions of Spans, Locations and useful operations on these.
 - `Definitions`: main definitions common to all files i.e. regex, reverse operation.
-- `Correctness`: equivalence theorem between `models` and `derives`.
+- `Correctness`: equivalence theorem between `Matches` and `derives`.
 - `Examples`: running examples shown in the paper, showcasing the algorithm in action.
-- `Models`: classical matching semantics, defined on locations and spans.
-- `ModelsReasoning`: setoid-reasoning for match semantics, used to obtain some lemmas on repetition.
+- `Matches`: classical matching semantics, defined on locations and spans.
+- `MatchesReasoning`: lemmas stating `Matches` on explicit spans, and the equivalence `↔ᵣ` of regexes with its basic properties.
 - `Derives`: main mutually-inductive definition of the derivation relation: derivatives, nullability.
 - `Metrics`: metrics on regular expression to show termination of theorems/definitions.
 - `MatchingAlgorithm`: main matching algorithm `llmatch`, with proofs of correctness.

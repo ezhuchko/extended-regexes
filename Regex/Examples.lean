@@ -43,7 +43,7 @@ def R : RE (BA Char)  := R₁ ⋒ R₂ ⋒ R₃ ⋒ R₄
 
 def Rl  : RE (BA Char) := (?<= 'a') ⬝ 'b'
 
-#eval Option.map Span.match $ llmatch R "0B:1aD2,e".toList
+#eval Option.map Span.mid $ llmatch R "0B:1aD2,e".toList
 #eval derives ⟨"a".toList,"b".toList,",cde".toList⟩ Rl
 
 def Rlb : RE (BA Char) := 'a' ⬝ (?= 'a') ⬝ 'a'
