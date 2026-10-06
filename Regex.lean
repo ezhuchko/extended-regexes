@@ -11,3 +11,15 @@ import Regex.EliminationNegLookarounds
 import Regex.Rewrites
 import Regex.MatchingAlgorithm
 import Regex.Examples
+import Regex.Finiteness.Evaluation
+import Regex.Finiteness.Finite
+import Regex.Finiteness.ListHelpers
+import Regex.Finiteness.NeSubsets
+import Regex.Finiteness.Permute
+import Regex.Finiteness.Pieces
+import Regex.Finiteness.Similarity
+import Regex.Finiteness.Simplifications
+import Regex.Finiteness.StepsNotIdem
+import Regex.Finiteness.SubsetUpTo
+import Regex.Finiteness.SymbolicDerivative
+import Regex.Finiteness.TTerm
